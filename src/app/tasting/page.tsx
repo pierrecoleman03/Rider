@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { usePhoto } from "@/lib/usePhoto";
 import { useRider } from "@/lib/store";
 import { DISHES, clashFor, scoreWord } from "@/lib/dishes";
 import type { Dish } from "@/lib/types";
@@ -19,6 +20,8 @@ export default function Tasting() {
   const [i, setI] = useState(0);
   const [score, setScore] = useState(0);
   const [learn, setLearn] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
 
   const feed = useMemo(() => {
     const pool = DISHES.filter((d) => region === "All regions" || d.area === region);
@@ -31,14 +34,29 @@ export default function Tasting() {
   const dish: Dish | undefined = feed.length ? feed[i % feed.length] : undefined;
   const clash = dish ? clashFor(dish, state.items) : null;
   const rated = state.ratings.filter((r) => r.score !== null).length;
+  const photo = usePhoto(dish?.name);
 
-  function next(tried: boolean) {
-    if (!dish) return;
-    if (tried && score) rate(dish.id, score);
-    else if (!tried) rate(dish.id, null);
+  function advance() {
     setScore(0);
     setLearn(false);
+    setLeaving(false);
     setI((n) => n + 1);
+  }
+
+  /** One tap: the score lights up, saves, and the next dish slides in. */
+  function pick(n: number) {
+    if (!dish || leaving) return;
+    setScore(n);
+    rate(dish.id, n);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setLeaving(true), 260);
+    timer.current = setTimeout(advance, 600);
+  }
+
+  function skip() {
+    if (!dish) return;
+    rate(dish.id, null);
+    advance();
   }
 
   return (
@@ -59,10 +77,15 @@ export default function Tasting() {
         {!dish && <p className="small">No dishes from this region yet. More are added every week.</p>}
 
         {dish && (
-          <article key={dish.id + i} className="card-swap" style={{ background: "#fff", borderRadius: 28, overflow: "hidden", boxShadow: "0 1px 2px rgba(28,28,58,0.04), 0 24px 48px rgba(60,50,120,0.12)" }}>
-            <div role="img" aria-label={`Photo placeholder: ${dish.name}`} style={{ position: "relative", height: 240, background: dish.tone }}>
+          <article key={dish.id + i} className={leaving ? "card-out" : "card-swap"} style={{ background: "#fff", borderRadius: 28, overflow: "hidden", boxShadow: "0 1px 2px rgba(28,28,58,0.04), 0 24px 48px rgba(60,50,120,0.12)" }}>
+            <div style={{ position: "relative", height: 240, background: dish.tone, overflow: "hidden" }}>
+              {photo && <img key={photo.url} className="photo-in" src={photo.url} alt={photo.alt} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
               <span style={{ position: "absolute", top: 14, left: 14, height: 30, padding: "0 12px", borderRadius: 15, background: "rgba(255,255,255,0.85)", display: "inline-flex", alignItems: "center", fontSize: 13, fontWeight: 500 }}>{dish.region}</span>
-              <span style={{ position: "absolute", bottom: 12, left: 14, fontSize: 12, color: "rgba(255,255,255,0.85)" }}>Photo: {dish.name}</span>
+              {photo && (
+                <span style={{ position: "absolute", bottom: 10, right: 12, fontSize: 11, color: "rgba(255,255,255,0.9)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                  Photo by <a href={photo.creditUrl} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>{photo.credit}</a> on <a href={photo.sourceUrl} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>Unsplash</a>
+                </span>
+              )}
             </div>
             <div style={{ padding: "18px 20px 20px", display: "flex", flexDirection: "column" }}>
               <h2 className="display" style={{ fontSize: 40 }}>{dish.name}</h2>
@@ -72,10 +95,10 @@ export default function Tasting() {
                   <span style={{ width: 8, height: 8, borderRadius: 4, background: "var(--accent)", flex: "none", marginTop: 5 }} />{clash}
                 </p>
               )}
-              <span className="small" style={{ marginTop: 16 }}>How much would you enjoy it?</span>
+              <span className="small" style={{ marginTop: 16 }}>Tap a score. The next dish comes right up.</span>
               <div className="rate-row" role="group" aria-label="How much would you enjoy it, 1 to 10" style={{ marginTop: 8 }}>
                 {Array.from({ length: 10 }, (_, k) => k + 1).map((n) => (
-                  <button key={n} type="button" aria-pressed={score === n} aria-label={`${n} out of 10`} onClick={() => setScore(n)}
+                  <button key={n} type="button" aria-pressed={score === n} aria-label={`${n} out of 10`} onClick={() => pick(n)}
                     className={`rate${score === n ? " on" : score && n <= score ? " lit" : ""}`}>{n}</button>
                 ))}
               </div>
@@ -84,7 +107,7 @@ export default function Tasting() {
               </div>
               <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
                 <button type="button" className="btn btn-ghost btn-sm" style={{ flex: 1, height: 48 }} onClick={() => setLearn(true)}>Haven't tried it</button>
-                <button type="button" className="btn btn-primary btn-sm" style={{ flex: 1, height: 48 }} onClick={() => next(true)}>{score ? "Save and next" : "Next dish"}</button>
+                <button type="button" className="btn btn-ghost btn-sm" style={{ flex: 1, height: 48 }} onClick={skip}>Skip</button>
               </div>
             </div>
           </article>
@@ -132,7 +155,7 @@ export default function Tasting() {
               </span>
             </div>
             <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
-              <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={() => next(false)}>Skip for now</button>
+              <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={skip}>Skip for now</button>
               <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setLearn(false)}>Rate {dish.name}</button>
             </div>
           </div>

@@ -6,6 +6,9 @@ export const VOCAB: { label: string; covers?: string[]; allergen?: boolean }[] =
   { label: "Peanuts", covers: ["peanut oil", "satay", "groundnut"], allergen: true },
   { label: "Tree nuts", covers: ["almond", "cashew", "walnut", "pesto"], allergen: true },
   { label: "Shellfish", covers: ["shrimp", "crab", "lobster", "shrimp paste"], allergen: true },
+  { label: "Fish", covers: ["fish sauce", "anchovies", "Worcestershire"], allergen: true },
+  { label: "Alcohol", covers: ["wine reductions", "beer batter", "liqueurs in desserts"] },
+  { label: "Mustard", allergen: true },
   { label: "Sesame", covers: ["tahini", "sesame oil", "furikake"], allergen: true },
   { label: "Gluten", covers: ["wheat", "soy sauce", "breadcrumbs"], allergen: true },
   { label: "Soy", covers: ["soy sauce", "tofu", "edamame", "miso"], allergen: true },
@@ -44,6 +47,9 @@ export const VOCAB: { label: string; covers?: string[]; allergen?: boolean }[] =
   { label: "Garlic" },
   { label: "Peppers" },
 ];
+
+/** The tap-to-pick chips on the first onboarding question: the most common allergies and hard nos. */
+export const COMMON_NEVERS = ["Peanuts", "Tree nuts", "Shellfish", "Fish", "Dairy", "Eggs", "Gluten", "Soy", "Sesame", "Pork", "Red meat", "Alcohol"];
 
 export function suggest(query: string, exclude: string[], limit = 4) {
   const q = query.trim().toLowerCase();
