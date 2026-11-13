@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/sora";
+import "@fontsource-variable/syne";
+import "@fontsource-variable/geist";
 import { RiderProvider } from "@/lib/store";
 import "./globals.css";
 

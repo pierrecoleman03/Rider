@@ -1,4 +1,4 @@
-/* Rider design tokens: Pearl palette, Sora type, motion primitives. */
+/* Rider design tokens: Pearl palette, Syne display with Geist text, motion primitives. */
 :root {
   --bg: #f6f5fb;
   --ink: #1c1c3a;
@@ -28,7 +28,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
 body {
-  font-family: "Sora Variable", system-ui, sans-serif;
+  font-family: "Geist Variable", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
@@ -48,12 +48,12 @@ button { font: inherit; color: inherit; }
 .page { position: relative; padding: 22px 22px 120px; display: flex; flex-direction: column; min-height: 100dvh; }
 
 /* Type */
-.display { font-weight: 300; letter-spacing: -0.03em; line-height: 1.04; margin: 0; }
+.display { font-family: "Syne Variable", "Geist Variable", sans-serif; font-weight: 500; letter-spacing: -0.02em; line-height: 1.04; margin: 0; }
 .h1 { font-size: 38px; }
 .h2 { font-size: 30px; }
 .lede { font-size: 16px; line-height: 1.5; color: #4a4b6c; margin: 0; }
 .small { font-size: 13px; color: var(--sub); }
-.wordmark { font-weight: 300; font-size: 24px; letter-spacing: -0.03em; }
+.wordmark { font-family: "Syne Variable", sans-serif; font-weight: 600; font-size: 24px; letter-spacing: -0.03em; }
 
 /* Aura glows */
 .glow {
