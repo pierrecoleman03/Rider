@@ -138,6 +138,8 @@ interface RiderApi {
   ready: boolean;
   mode: "local" | "supabase";
   state: RiderState;
+  /** Starts a guest rider with no sign-in screen. Real sign-in can be linked to it later. */
+  startGuest(): Promise<void>;
   signIn(provider: "apple" | "google"): Promise<void>;
   finishOnboarding(input: { name: string; items: { label: string; tier: Tier; allergy?: boolean }[] }): void;
   addItem(label: string, tier: Tier): void;
@@ -154,16 +156,31 @@ interface RiderApi {
 
 const Ctx = createContext<RiderApi | null>(null);
 
+/** Set once in this browser when the database is unreachable or guest access is off, so Rider keeps working on-device. */
+const LOCAL_FLAG = "rider:local";
+
+function prefersLocal(): boolean {
+  if (!hasSupabase) return true;
+  try { return window.localStorage.getItem(LOCAL_FLAG) === "1"; } catch { return false; }
+}
+
 export function RiderProvider({ children }: { children: React.ReactNode }) {
-  const adapter = hasSupabase ? supabaseAdapter : localAdapter;
+  const [mode, setMode] = useState<"local" | "supabase">(hasSupabase ? "supabase" : "local");
+  const adapterRef = useRef<Adapter>(hasSupabase ? supabaseAdapter : localAdapter);
   const [state, setState] = useState<RiderState>(EMPTY);
   const [ready, setReady] = useState(false);
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  function switchToLocal() {
+    adapterRef.current = localAdapter;
+    setMode("local");
+  }
+
   useEffect(() => {
     let alive = true;
-    adapter.load().then((loaded) => {
+    if (prefersLocal()) switchToLocal();
+    adapterRef.current.load().then((loaded) => {
       if (!alive) return;
       if (loaded) setState(loaded);
       setReady(true);
@@ -176,13 +193,34 @@ export function RiderProvider({ children }: { children: React.ReactNode }) {
     // Update the ref right away so several actions in one tick build on each other instead of on a stale render.
     stateRef.current = next;
     setState(next);
-    void adapter.save(next, change);
-  }, [adapter]);
+    void adapterRef.current.save(next, change);
+  }, []);
+
+  const adapter = adapterRef.current;
 
   const api = useMemo<RiderApi>(() => ({
     ready,
-    mode: hasSupabase ? "supabase" : "local",
+    mode,
     state,
+    async startGuest() {
+      // No sign-in screen for now: create a guest account so the rider still saves to the database.
+      // If guest accounts are switched off in Supabase, fall back to saving in this browser.
+      const sb = supabaseBrowser();
+      if (!sb || adapterRef.current === localAdapter) return;
+      let failed = false;
+      try {
+        const { data } = await sb.auth.getSession();
+        if (data.session) return;
+        const { error } = await sb.auth.signInAnonymously();
+        failed = !!error;
+      } catch {
+        failed = true; // offline or blocked network
+      }
+      if (failed) {
+        try { window.localStorage.setItem(LOCAL_FLAG, "1"); } catch { /* ignore */ }
+        switchToLocal();
+      }
+    },
     async signIn(provider) {
       const sb = supabaseBrowser();
       if (!sb) return; // local mode: onboarding continues without an account
@@ -204,8 +242,8 @@ export function RiderProvider({ children }: { children: React.ReactNode }) {
         connections: s.connections.some((c) => c.appId === "itin") ? s.connections : [itinConnection(), ...s.connections],
       };
       commit(next, { kind: "items-replace" });
-      void adapter.save(next, { kind: "profile" });
-      next.connections.forEach((c) => void adapter.save(next, { kind: "connection-upsert", connection: c }));
+      void adapterRef.current.save(next, { kind: "profile" });
+      next.connections.forEach((c) => void adapterRef.current.save(next, { kind: "connection-upsert", connection: c }));
     },
     addItem(label, tier) {
       const s = stateRef.current;
@@ -266,9 +304,11 @@ export function RiderProvider({ children }: { children: React.ReactNode }) {
     },
     reset() {
       try { window.localStorage.removeItem(KEY); } catch { /* ignore */ }
+      void supabaseBrowser()?.auth.signOut();
       setState(EMPTY);
     },
-  }), [ready, state, commit, adapter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [ready, mode, state, commit, adapter]);
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

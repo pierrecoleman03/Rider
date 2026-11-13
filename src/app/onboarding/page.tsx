@@ -10,7 +10,7 @@ import { riderSentence } from "@/lib/sentence";
 import type { RiderItem, Tier } from "@/lib/types";
 import { Glows } from "@/components/Glows";
 import { RiderCard } from "@/components/RiderCard";
-import { IconApple, IconBack, IconCheck, IconLock, IconMic, IconWallet } from "@/components/Icons";
+import { IconBack, IconCheck, IconLock, IconMic, IconWallet } from "@/components/Icons";
 
 type Draft = { label: string; tier: Tier; allergy?: boolean };
 const EXAMPLES = ["Shellfish allergy", "Vegetarian", "No cilantro", "Love spicy food"];
@@ -20,7 +20,8 @@ const NEXT_TIER: Record<Tier, Tier> = { never: "rather", rather: "love", love: "
 function Onboarding() {
   const params = useSearchParams();
   const router = useRouter();
-  const { state, signIn, finishOnboarding, rate, connect, mode } = useRider();
+  const { state, startGuest, finishOnboarding, rate, connect } = useRider();
+  const [starting, setStarting] = useState(false);
   const [step, setStep] = useState(() => Math.min(6, Math.max(1, Number(params.get("step")) || 1)));
   const [said, setSaid] = useState("");
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -46,9 +47,12 @@ function Onboarding() {
     setStep(3);
   }
 
-  async function startWith(provider: "apple" | "google") {
-    if (mode === "supabase") await signIn(provider);
-    else setStep(2);
+  async function getStarted() {
+    // Sign-in is paused for now. Everyone starts as a guest; Apple and Google can be linked later without losing the rider.
+    setStarting(true);
+    await startGuest();
+    setStarting(false);
+    setStep(2);
   }
 
   function nextDish(tried: boolean) {
@@ -95,8 +99,7 @@ function Onboarding() {
             <h1 className="display h1 reveal" style={{ marginTop: 48 }}>Your taste, everywhere you eat.</h1>
             <p className="lede reveal" style={{ marginTop: 14, animationDelay: ".1s" }}>One profile of what you love, what you avoid and what you can't have. itin and other apps read it live, so you never explain yourself twice.</p>
             <div style={{ marginTop: "auto", paddingTop: 28, display: "flex", flexDirection: "column", gap: 10 }}>
-              <div className="lum btn-lum"><button type="button" className="btn btn-primary" onClick={() => startWith("apple")}><IconApple />Continue with Apple</button></div>
-              <button type="button" className="btn btn-ghost btn-block" onClick={() => startWith("google")}>Continue with Google</button>
+              <div className="lum btn-lum"><button type="button" className="btn btn-primary" disabled={starting} onClick={getStarted}>{starting ? "One moment" : "Get started"}</button></div>
               <span className="small" style={{ textAlign: "center", fontSize: 12, marginTop: 4 }}>You own your rider. Apps only see what you allow.</span>
             </div>
           </section>
