@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useRider } from "@/lib/store";
@@ -24,18 +24,31 @@ const SCOPE_HINT: Record<Scope, string> = {
  */
 function Connect() {
   const params = useSearchParams();
-  const { state, connect, mode } = useRider();
+  const { state, connect, mode, ready, upgradeToServer } = useRider();
   const clientId = params.get("client_id") ?? "";
   const app = appById(clientId);
   const requested = (params.get("scope") ?? "never rather love").split(/[\s+,]+/).filter((s): s is Scope => s in SCOPE_LABEL);
   const [scopes, setScopes] = useState<Scope[]>(requested.filter((s) => s !== "guesses"));
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const here = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/connect";
+
+  // A rider made before accounts existed lives only in this browser. Move it into a guest account
+  // so the partner can read it once connected.
+  useEffect(() => {
+    if (ready && state.profile.onboarded && mode === "local" && params.get("redirect_uri")) void upgradeToServer();
+  }, [ready, state.profile.onboarded, mode, params, upgradeToServer]);
 
   async function approve() {
     setError("");
     const redirect = params.get("redirect_uri");
-    if (mode === "supabase" && redirect) {
+    if (redirect && mode === "local" && !(await upgradeToServer())) {
+      setError("Rider couldn't save your account just now. Try again in a moment.");
+      return;
+    }
+    if (redirect) {
+      setBusy(true);
       const sb = supabaseBrowser();
       const { data } = await sb!.auth.getSession();
       const res = await fetch("/api/connect/approve", {
@@ -44,7 +57,7 @@ function Connect() {
         body: JSON.stringify({ app_id: clientId, scopes, redirect_uri: redirect, state: params.get("state") }),
       });
       const body = await res.json();
-      if (!res.ok) { setError("That didn't work. Check that you're signed in and try again."); return; }
+      if (!res.ok) { setBusy(false); setError("That didn't work. Try again in a moment."); return; }
       window.location.href = body.redirect;
       return;
     }
@@ -94,11 +107,13 @@ function Connect() {
                 </label>
               ))}
             </div>
-            {!state.profile.onboarded && <p className="small" style={{ marginTop: 12 }}>No rider yet? <Link href="/onboarding">Make one in a minute</Link>, then come back.</p>}
+            {!state.profile.onboarded && (
+              <Link href={`/onboarding?next=${encodeURIComponent(here)}`} className="btn btn-ghost btn-block" style={{ marginTop: 14 }}>No rider yet? Make one in a minute</Link>
+            )}
             {error && <p role="alert" style={{ color: "#8a1c1c", fontSize: 14 }}>{error}</p>}
             <p className="small" style={{ marginTop: 16, display: "flex", gap: 10, lineHeight: 1.45 }}><IconLock />Rider never shares who you dine with and never sells your data.</p>
             <div className="lum btn-lum" style={{ marginTop: "auto" }}>
-              <button type="button" className="btn btn-primary" disabled={!scopes.length || !state.profile.onboarded} onClick={approve}>Connect with Rider</button>
+              <button type="button" className="btn btn-primary" disabled={!scopes.length || !state.profile.onboarded || busy} onClick={approve}>{busy ? "Connecting" : "Connect with Rider"}</button>
             </div>
           </>
         )}

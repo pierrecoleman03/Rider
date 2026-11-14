@@ -5,7 +5,7 @@ import type { PartnerApp, Scope } from "./types";
  * Connect with Rider flow (/connect). In production this list lives in the partner_apps table.
  */
 export const APPS: PartnerApp[] = [
-  { id: "itin", name: "itin", category: "Restaurant picks", description: "Built in. Your picks already use your rider.", builtIn: true },
+  { id: "itin", name: "itin", category: "Restaurant picks", description: "Finds restaurants and nights out that fit you", builtIn: true },
   { id: "delivery", name: "Food delivery", category: "Delivery", description: "Gray out dishes that break your rider" },
   { id: "reservations", name: "Reservations", category: "Reservations", description: "Send your rider with every booking" },
   { id: "hotels", name: "Hotels", category: "Hotels", description: "Room service and the concierge know" },

@@ -153,6 +153,8 @@ interface RiderApi {
   setScopes(connectionId: string, scopes: Scope[]): void;
   revoke(connectionId: string): void;
   reset(): void;
+  /** Moves a rider saved only in this browser into a (guest) account, so partner apps can read it. True when it worked. */
+  upgradeToServer(): Promise<boolean>;
 }
 
 const Ctx = createContext<RiderApi | null>(null);
@@ -221,6 +223,29 @@ export function RiderProvider({ children }: { children: React.ReactNode }) {
         try { window.localStorage.setItem(LOCAL_FLAG, "1"); } catch { /* ignore */ }
         switchToLocal();
       }
+    },
+    async upgradeToServer() {
+      const sb = supabaseBrowser();
+      if (!sb) return false;
+      try {
+        const { data } = await sb.auth.getSession();
+        if (!data.session) {
+          const { error } = await sb.auth.signInAnonymously();
+          if (error) return false;
+        }
+      } catch {
+        return false;
+      }
+      if (adapterRef.current === supabaseAdapter) return true;
+      try { window.localStorage.removeItem(LOCAL_FLAG); } catch { /* ignore */ }
+      const s = stateRef.current;
+      adapterRef.current = supabaseAdapter;
+      setMode("supabase");
+      // Copy everything made in this browser into the account.
+      await supabaseAdapter.save(s, { kind: "profile" });
+      await supabaseAdapter.save(s, { kind: "items-replace" });
+      for (const rating of s.ratings) await supabaseAdapter.save(s, { kind: "rating", rating });
+      return true;
     },
     async signIn(provider) {
       const sb = supabaseBrowser();

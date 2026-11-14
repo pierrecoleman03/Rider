@@ -62,7 +62,9 @@ function Onboarding() {
 
   function finish() {
     Object.entries(apps).filter(([, on]) => on).forEach(([id]) => connect(id, [...DEFAULT_SCOPES]));
-    router.replace("/");
+    // Came here from a partner's Connect with Rider link: go straight back to finish connecting.
+    const next = params.get("next");
+    router.replace(next && next.startsWith("/connect?") ? next : "/");
   }
 
   return (
@@ -178,7 +180,7 @@ function Onboarding() {
               <span style={{ width: 44, height: 44, borderRadius: 12, background: "var(--ink)", color: "#fff", fontStyle: "italic", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center" }}>itin</span>
               <span style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                 <span style={{ fontWeight: 600, fontSize: 15 }}>itin</span>
-                <span className="small">Built in. Your picks already use your rider.</span>
+                <span className="small">Finds restaurants and nights out that fit you.</span>
               </span>
               <span aria-label="Connected" style={{ width: 26, height: 26, borderRadius: 13, background: "var(--love-bg)", color: "var(--love-fg)", display: "flex", alignItems: "center", justifyContent: "center" }}><IconCheck /></span>
             </div>
