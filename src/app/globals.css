@@ -53,7 +53,7 @@ button { font: inherit; color: inherit; }
 .h2 { font-size: 30px; }
 .lede { font-size: 16px; line-height: 1.5; color: #4a4b6c; margin: 0; }
 .small { font-size: 13px; color: var(--sub); }
-.wordmark { font-family: "Syne Variable", sans-serif; font-weight: 600; font-size: 24px; letter-spacing: -0.03em; }
+.wordmark { font-family: "Archivo Variable", sans-serif; font-stretch: 125%; font-weight: 600; letter-spacing: 0.06em; font-size: 24px; }
 
 /* Aura glows */
 .glow {

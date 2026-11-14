@@ -10,6 +10,7 @@ import type { RiderItem } from "@/lib/types";
 import { Glows } from "@/components/Glows";
 import { RiderCard } from "@/components/RiderCard";
 import { IconBack, IconCheck, IconLock, IconPlus, IconWallet } from "@/components/Icons";
+import { RiderWordmark } from "@/components/RiderMark";
 
 type Pick = { label: string; allergy: boolean };
 
@@ -79,7 +80,7 @@ function Onboarding() {
 
         {step === 1 && (
           <section key="s1" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <span className="wordmark">Rider</span>
+            <RiderWordmark size={20} />
             <div style={{ margin: "52px auto 0", width: "88%" }}><RiderCard name="" caption="Yours in a minute" floating height={180} /></div>
             <h1 className="display h1 reveal" style={{ marginTop: 48 }}>Your taste, everywhere you go.</h1>
             <p className="lede reveal" style={{ marginTop: 14, animationDelay: ".1s" }}>One profile of what you love, what you avoid and what you can't have. The apps you use read it live, so you never explain yourself twice.</p>

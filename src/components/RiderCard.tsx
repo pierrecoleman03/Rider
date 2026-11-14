@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { IconTap } from "./Icons";
+import { RiderMark } from "@/components/RiderMark";
 
 interface Props {
   name: string;
@@ -35,7 +36,7 @@ export function RiderCard({ name, allergy, caption = "Tap to show at the table",
   const body = (
     <div ref={ref} className="pearl-card" style={{ height, padding: "18px 20px", transition: "transform .4s var(--ease-out)" }}>
       <span style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span className="wordmark" style={{ fontSize: 18 }}>Rider</span>
+        <RiderMark size={30} title="Rider" />
         <IconTap />
       </span>
       <span style={{ position: "relative", display: "flex", flexDirection: "column", gap: 10 }}>

@@ -9,6 +9,7 @@ import { supabaseBrowser } from "@/lib/supabase";
 import type { Scope } from "@/lib/types";
 import { Glows } from "@/components/Glows";
 import { IconLock } from "@/components/Icons";
+import { RiderMark } from "@/components/RiderMark";
 
 const SCOPE_HINT: Record<Scope, string> = {
   never: "Allergies and hard nos",
@@ -68,7 +69,7 @@ function Connect() {
           <span style={{ width: 56, height: 56, borderRadius: 16, background: "var(--ink)", color: "#fff", fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center" }}>{app.name.charAt(0)}</span>
           <span aria-hidden="true" style={{ letterSpacing: 4, color: "var(--muted)" }}>...</span>
           <span className="lum" style={{ "--lum-radius": "16px" } as React.CSSProperties}>
-            <span style={{ width: 56, height: 56, background: "var(--pearl)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>Rider</span>
+            <span style={{ width: 56, height: 56, background: "var(--pearl)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink)" }}><RiderMark size={30} title="Rider" /></span>
           </span>
         </div>
 

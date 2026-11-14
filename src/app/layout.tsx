@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/syne";
 import "@fontsource-variable/geist";
+import "@fontsource-variable/archivo/wdth.css";
 import { RiderProvider } from "@/lib/store";
 import "./globals.css";
 

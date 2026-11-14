@@ -11,6 +11,7 @@ import { RiderCard } from "@/components/RiderCard";
 import { RiderEditor } from "@/components/RiderEditor";
 import { TabBar } from "@/components/TabBar";
 import { IconChevron } from "@/components/Icons";
+import { RiderWordmark } from "@/components/RiderMark";
 
 export default function Home() {
   const { ready, state } = useRider();
@@ -31,7 +32,7 @@ export default function Home() {
       <Glows />
       <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 22 }}>
         <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span className="wordmark">Rider</span>
+          <RiderWordmark size={20} />
           <Link href="/places" className="icon-btn" aria-label="My profile and connected apps" style={{ fontWeight: 300, fontSize: 18 }}>
             {(state.profile.name || "R").charAt(0).toUpperCase()}
           </Link>
