@@ -65,6 +65,8 @@ export interface Connection {
 export interface Profile {
   name: string;
   onboarded: boolean;
+  /** Categories switched off for apps. They stay in the rider but are never shared. */
+  hiddenDomains?: Domain[];
 }
 
 export interface RiderState {

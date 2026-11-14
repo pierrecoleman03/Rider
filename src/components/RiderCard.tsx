@@ -10,6 +10,7 @@ interface Props {
   allergy?: boolean;
   caption?: string;
   href?: string;
+  /** Ignored: the card always keeps real credit card proportions. */
   height?: number;
   floating?: boolean;
 }
@@ -18,7 +19,7 @@ interface Props {
  * The Rider card: pearl surface, a slow sheen, and a luminous border that travels around the edge.
  * It tilts toward the pointer so it feels like a physical card in your hand.
  */
-export function RiderCard({ name, allergy, caption = "Tap to show at the table", href, height = 170, floating }: Props) {
+export function RiderCard({ name, allergy, caption = "Tap to show at the table", href, floating }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   function onMove(e: React.PointerEvent) {
@@ -34,7 +35,7 @@ export function RiderCard({ name, allergy, caption = "Tap to show at the table",
   }
 
   const body = (
-    <div ref={ref} className="pearl-card" style={{ height, padding: "18px 20px", transition: "transform .4s var(--ease-out)" }}>
+    <div ref={ref} className="pearl-card" style={{ aspectRatio: "1.586 / 1", padding: "18px 20px", transition: "transform .4s var(--ease-out)" }}>
       <span style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <RiderMark size={30} title="Rider" />
         <IconTap />

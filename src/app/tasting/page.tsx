@@ -7,15 +7,19 @@ import { DISHES, clashFor, scoreWord } from "@/lib/dishes";
 import type { Dish } from "@/lib/types";
 import { Glows } from "@/components/Glows";
 import { TabBar } from "@/components/TabBar";
+import { AddedToast, RoomNav } from "@/components/RoomNav";
+import { tierForScore } from "@/lib/rooms";
 
 const REGIONS = ["All regions", "Asia", "Africa", "Latin America", "Europe", "Middle East"] as const;
+const TIER_NAME = { love: "Love", rather: "Rather not" } as const;
 
 /**
  * Tasting Room: an endless, global feed. Unrated dishes come first; once everything is rated the
  * feed loops so people can revisit. Clashes with the rider are called out on the card.
  */
 export default function Tasting() {
-  const { state, rate } = useRider();
+  const { state, rate, addItem } = useRider();
+  const [toast, setToast] = useState<string | null>(null);
   const [region, setRegion] = useState<(typeof REGIONS)[number]>("All regions");
   const [i, setI] = useState(0);
   const [score, setScore] = useState(0);
@@ -48,6 +52,12 @@ export default function Tasting() {
     if (!dish || leaving) return;
     setScore(n);
     rate(dish.id, n);
+    const tier = tierForScore(n);
+    if (tier && !clash) {
+      addItem(dish.name, tier, "food");
+      setToast(`Added ${dish.name.toLowerCase()} to ${TIER_NAME[tier]}`);
+      setTimeout(() => setToast(null), 1800);
+    }
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setLeaving(true), 260);
     timer.current = setTimeout(advance, 600);
@@ -67,6 +77,8 @@ export default function Tasting() {
           <h1 className="display" style={{ fontSize: 30 }}>Tasting Room</h1>
           <span className="small">{rated} rated</span>
         </header>
+
+        <RoomNav current="food" />
 
         <div style={{ display: "flex", gap: 8, overflowX: "auto", margin: "0 -22px", padding: "0 22px 2px", scrollbarWidth: "none" }}>
           {REGIONS.map((r) => (
@@ -162,6 +174,7 @@ export default function Tasting() {
         </>
       )}
       <style>{`@keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }`}</style>
+      <AddedToast text={toast} />
       <TabBar />
     </main>
   );

@@ -25,9 +25,13 @@ export async function GET(req: Request) {
     .maybeSingle();
   if (!conn || conn.revoked_at) return json({ error: "revoked_or_unknown" }, 401);
 
-  const { data: rows } = await admin.from("rider_items").select("*").eq("user_id", conn.user_id);
-  const items: RiderItem[] = (rows ?? []).map((r) => ({
-    id: r.id, label: r.label, tier: r.tier, allergy: r.allergy, source: r.source,
+  const [{ data: rows }, { data: profile }] = await Promise.all([
+    admin.from("rider_items").select("*").eq("user_id", conn.user_id),
+    admin.from("profiles").select("hidden_domains").eq("id", conn.user_id).maybeSingle(),
+  ]);
+  const hidden: string[] = profile?.hidden_domains ?? [];
+  const items: RiderItem[] = (rows ?? []).filter((r) => !hidden.includes(r.domain ?? "food")).map((r) => ({
+    id: r.id, label: r.label, tier: r.tier, allergy: r.allergy, source: r.source, domain: r.domain ?? "food",
     confidence: r.confidence ?? undefined, covers: r.covers ?? undefined, createdAt: r.created_at,
   }));
 

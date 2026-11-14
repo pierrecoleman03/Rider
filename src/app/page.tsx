@@ -10,6 +10,8 @@ import type { Domain } from "@/lib/types";
 import { useRider } from "@/lib/store";
 import { riderSentence } from "@/lib/sentence";
 import { DISHES } from "@/lib/dishes";
+import { roomFor } from "@/lib/rooms";
+import { synopsisHeadline } from "@/lib/synopsis";
 import { Glows } from "@/components/Glows";
 import { RiderCard } from "@/components/RiderCard";
 import { RiderEditor } from "@/components/RiderEditor";
@@ -56,7 +58,11 @@ function Home() {
 
   const sentence = useMemo(() => riderSentence(inDomain), [inDomain]);
   const counts = useMemo(() => Object.fromEntries(DOMAINS.map((x) => [x.id, state.items.filter((i) => i.source === "told" && (i.domain ?? "food") === x.id).length])), [state.items]);
-  const next = DISHES.find((d) => !state.ratings.some((r) => r.dishId === d.id)) ?? DISHES[0];
+  const room = roomFor(domain);
+  const nextName = domain === "food"
+    ? (DISHES.find((x) => !state.ratings.some((r) => r.dishId === x.id)) ?? DISHES[0]).name.toLowerCase()
+    : (room.cards.find((c) => !state.ratings.some((r) => r.dishId === c.id)) ?? room.cards[0]).name.toLowerCase();
+  const headline = useMemo(() => synopsisHeadline(state), [state]);
   const hasAllergy = state.items.some((i) => i.allergy && i.source === "told");
 
   if (!ready || !state.profile.onboarded) return <main className="page" aria-busy="true"><Glows /></main>;
@@ -73,6 +79,14 @@ function Home() {
         </header>
 
         <RiderCard name={state.profile.name} allergy={hasAllergy} href="/pass" />
+
+        <Link href="/synopsis" className="glass synopsis-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", textDecoration: "none" }}>
+          <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--sub)" }}><span className="live-dot" />Rider's read on you</span>
+            <span style={{ fontSize: 14, lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{headline}</span>
+          </span>
+          <IconChevron />
+        </Link>
 
         <nav aria-label="Categories" className="cat-row">
           {DOMAINS.map((x) => (
@@ -94,11 +108,11 @@ function Home() {
 
         <RiderEditor domain={domain} />
 
-        <Link href="/tasting" className="glass" style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px 10px 10px", textDecoration: "none", transition: "transform .18s var(--ease-out)" }}>
-          <span role="img" aria-label={`${next.name} photo placeholder`} style={{ width: 48, height: 48, borderRadius: 14, background: next.tone, flex: "none" }} />
+        <Link href={room.href} className="glass" style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px 10px 10px", textDecoration: "none", transition: "transform .18s var(--ease-out)" }}>
+          <span aria-hidden="true" style={{ width: 48, height: 48, borderRadius: 14, background: D.art, flex: "none" }} />
           <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            <span style={{ fontWeight: 600, fontSize: 15 }}>Tasting Room</span>
-            <span className="small">Up next: {next.name.toLowerCase()}, from {next.region}</span>
+            <span style={{ fontWeight: 600, fontSize: 15 }}>{room.name}</span>
+            <span className="small">Up next: {nextName}</span>
           </span>
           <IconChevron />
         </Link>

@@ -75,13 +75,13 @@ const supabaseAdapter: Adapter = {
     const { data: auth } = await sb.auth.getUser();
     if (!auth.user) return null;
     const [profile, items, ratings, conns] = await Promise.all([
-      sb.from("profiles").select("name, onboarded").eq("id", auth.user.id).maybeSingle(),
+      sb.from("profiles").select("name, onboarded, hidden_domains").eq("id", auth.user.id).maybeSingle(),
       sb.from("rider_items").select("*").order("created_at"),
       sb.from("ratings").select("*"),
       sb.from("connections").select("*").is("revoked_at", null),
     ]);
     return {
-      profile: { name: profile.data?.name ?? "", onboarded: profile.data?.onboarded ?? false },
+      profile: { name: profile.data?.name ?? "", onboarded: profile.data?.onboarded ?? false, hiddenDomains: profile.data?.hidden_domains ?? [] },
       items: (items.data ?? []).map((r) => ({
         id: r.id, label: r.label, tier: r.tier, allergy: r.allergy, source: r.source, domain: r.domain ?? "food",
         confidence: r.confidence ?? undefined, reason: r.reason ?? undefined, covers: r.covers ?? undefined, createdAt: r.created_at,
@@ -104,7 +104,7 @@ const supabaseAdapter: Adapter = {
     });
     switch (change.kind) {
       case "profile":
-        await sb.from("profiles").upsert({ id: userId, name: state.profile.name, onboarded: state.profile.onboarded });
+        await sb.from("profiles").upsert({ id: userId, name: state.profile.name, onboarded: state.profile.onboarded, hidden_domains: state.profile.hiddenDomains ?? [] });
         break;
       case "item-upsert":
         await sb.from("rider_items").upsert(itemRow(change.item));
@@ -146,6 +146,7 @@ interface RiderApi {
   removeItem(id: string): void;
   setTier(id: string, tier: Tier): void;
   confirmGuess(id: string): void;
+  setDomainShared(domain: Domain, shared: boolean): void;
   rate(dishId: string, score: number | null): void;
   setAllergy(id: string, allergy: boolean): void;
   connect(appId: string, scopes: Scope[]): void;
@@ -237,7 +238,7 @@ export function RiderProvider({ children }: { children: React.ReactNode }) {
       }));
       const next: RiderState = {
         ...s,
-        profile: { name: name || s.profile.name || "You", onboarded: true },
+        profile: { ...s.profile, name: name || s.profile.name || "You", onboarded: true },
         items: [...told, ...starterGuesses()],
         connections: s.connections.some((c) => c.appId === "itin") ? s.connections : [itinConnection(), ...s.connections],
       };
@@ -271,6 +272,13 @@ export function RiderProvider({ children }: { children: React.ReactNode }) {
       const items = s.items.map((i) => (i.id === id ? { ...i, allergy, tier: allergy ? ("never" as const) : i.tier } : i));
       const item = items.find((i) => i.id === id);
       if (item) commit({ ...s, items }, { kind: "item-upsert", item });
+    },
+    setDomainShared(domain, shared) {
+      const s = stateRef.current;
+      const hidden = new Set(s.profile.hiddenDomains ?? []);
+      if (shared) hidden.delete(domain); else hidden.add(domain);
+      const next = { ...s, profile: { ...s.profile, hiddenDomains: [...hidden] } };
+      commit(next, { kind: "profile" });
     },
     confirmGuess(id) {
       const s = stateRef.current;
