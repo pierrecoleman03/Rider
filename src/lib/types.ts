@@ -1,9 +1,12 @@
+export type Domain = "food" | "exp" | "travel" | "gifts" | "style";
 export type Tier = "never" | "rather" | "love";
 
 /** Where an item came from: the person said it, or Rider inferred it and is waiting for a yes. */
 export type Source = "told" | "guess";
 
 export interface RiderItem {
+  /** Category; missing means food (older items). */
+  domain?: Domain;
   id: string;
   label: string;
   tier: Tier;

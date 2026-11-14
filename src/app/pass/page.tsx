@@ -10,7 +10,7 @@ import { IconBack, IconWallet } from "@/components/Icons";
 /** The pass: what a server or hotel sees when you show your phone. Large type, never list first. */
 export default function Pass() {
   const { state } = useRider();
-  const told = state.items.filter((i) => i.source === "told");
+  const told = state.items.filter((i) => i.source === "told" && (i.domain ?? "food") === "food");
   const never = told.filter((i) => i.tier === "never");
   const rather = told.filter((i) => i.tier === "rather");
 

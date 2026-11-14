@@ -1,9 +1,10 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useRider } from "@/lib/store";
 import { suggest } from "@/lib/vocab";
-import type { RiderItem, Tier } from "@/lib/types";
+import type { Domain, RiderItem, Tier } from "@/lib/types";
+import { domainById } from "@/lib/domains";
 import { IconPlus } from "./Icons";
 
 const TIERS: { id: Tier; label: string }[] = [
@@ -13,23 +14,27 @@ const TIERS: { id: Tier; label: string }[] = [
 ];
 
 /** Type-to-add box with live suggestions, chips grouped by tier, Rider's guesses, and a detail sheet per item. */
-export function RiderEditor() {
+export function RiderEditor({ domain = "food" }: { domain?: Domain }) {
+  const D = domainById(domain);
   const { state, addItem, removeItem, setTier, setAllergy, confirmGuess } = useRider();
   const [query, setQuery] = useState("");
-  const [tier, setTierChoice] = useState<Tier>("never");
+  // Food starts on Never (allergies first); everything else starts on Love.
+  const [tier, setTierChoice] = useState<Tier>(domain === "food" ? "never" : "love");
+  useEffect(() => { setTierChoice(domain === "food" ? "never" : "love"); setQuery(""); }, [domain]);
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState<RiderItem | null>(null);
   const listId = useId();
 
-  const told = state.items.filter((i) => i.source === "told");
-  const guesses = state.items.filter((i) => i.source === "guess");
-  const matches = useMemo(() => suggest(query, told.map((i) => i.label)), [query, told]);
+  const inDomain = state.items.filter((i) => (i.domain ?? "food") === domain);
+  const told = inDomain.filter((i) => i.source === "told");
+  const guesses = inDomain.filter((i) => i.source === "guess");
+  const matches = useMemo(() => suggest(query, told.map((i) => i.label), 4, domain === "food" ? undefined : D.vocab), [query, told, domain, D.vocab]);
   const raw = query.trim();
   const exact = matches.some((m) => m.label.toLowerCase() === raw.toLowerCase());
   const options = [...matches.map((m) => m.label), ...(raw && !exact ? [raw.charAt(0).toUpperCase() + raw.slice(1)] : [])];
 
   function add(label: string) {
-    addItem(label, tier);
+    addItem(label, tier, domain);
     setQuery("");
     setActive(0);
   }
@@ -48,8 +53,10 @@ export function RiderEditor() {
     <section style={{ display: "flex", flexDirection: "column", gap: 12 }} aria-label="Your rider">
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
         <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Your rider</h2>
-        <span className="small" style={{ fontSize: 12 }}>{told.length} items, read live by {state.connections.length} {state.connections.length === 1 ? "app" : "apps"}</span>
+        <span className="small" style={{ fontSize: 12 }}>{told.length} in {D.label.toLowerCase()}, read live by {state.connections.length} {state.connections.length === 1 ? "app" : "apps"}</span>
       </div>
+
+      {told.length === 0 && D.empty && <p className="small reveal" style={{ margin: 0, lineHeight: 1.45 }}>{D.empty}</p>}
 
       <div style={{ position: "relative" }}>
         <label htmlFor="rider-add" className="sr-only">Add to your rider</label>
@@ -59,7 +66,7 @@ export function RiderEditor() {
           value={query}
           onChange={(e) => { setQuery(e.target.value); setActive(0); }}
           onKeyDown={onKey}
-          placeholder="Add a food, drink or allergy"
+          placeholder={D.hint}
           autoComplete="off"
           role="combobox"
           aria-expanded={options.length > 0}

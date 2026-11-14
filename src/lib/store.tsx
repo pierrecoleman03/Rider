@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { Connection, Rating, RiderItem, RiderState, Scope, Tier } from "./types";
+import type { Connection, Rating, RiderItem, RiderState, Scope, Tier, Domain } from "./types";
 import { DEFAULT_SCOPES } from "./apps";
 import { lookup } from "./vocab";
 import { hasSupabase, supabaseBrowser } from "./supabase";
@@ -83,7 +83,7 @@ const supabaseAdapter: Adapter = {
     return {
       profile: { name: profile.data?.name ?? "", onboarded: profile.data?.onboarded ?? false },
       items: (items.data ?? []).map((r) => ({
-        id: r.id, label: r.label, tier: r.tier, allergy: r.allergy, source: r.source,
+        id: r.id, label: r.label, tier: r.tier, allergy: r.allergy, source: r.source, domain: r.domain ?? "food",
         confidence: r.confidence ?? undefined, reason: r.reason ?? undefined, covers: r.covers ?? undefined, createdAt: r.created_at,
       })),
       ratings: (ratings.data ?? []).map((r) => ({ dishId: r.dish_id, score: r.score, ratedAt: r.rated_at })),
@@ -99,7 +99,7 @@ const supabaseAdapter: Adapter = {
     const userId = auth.user?.id;
     if (!userId) return;
     const itemRow = (i: RiderItem) => ({
-      id: i.id, user_id: userId, label: i.label, tier: i.tier, allergy: !!i.allergy, source: i.source,
+      id: i.id, user_id: userId, label: i.label, tier: i.tier, allergy: !!i.allergy, source: i.source, domain: i.domain ?? "food",
       confidence: i.confidence ?? null, reason: i.reason ?? null, covers: i.covers ?? null, created_at: i.createdAt,
     });
     switch (change.kind) {
@@ -142,7 +142,7 @@ interface RiderApi {
   startGuest(): Promise<void>;
   signIn(provider: "apple" | "google"): Promise<void>;
   finishOnboarding(input: { name: string; items: { label: string; tier: Tier; allergy?: boolean }[] }): void;
-  addItem(label: string, tier: Tier): void;
+  addItem(label: string, tier: Tier, domain?: Domain): void;
   removeItem(id: string): void;
   setTier(id: string, tier: Tier): void;
   confirmGuess(id: string): void;
@@ -245,13 +245,13 @@ export function RiderProvider({ children }: { children: React.ReactNode }) {
       void adapterRef.current.save(next, { kind: "profile" });
       next.connections.forEach((c) => void adapterRef.current.save(next, { kind: "connection-upsert", connection: c }));
     },
-    addItem(label, tier) {
+    addItem(label, tier, domain = "food") {
       const s = stateRef.current;
       const clean = label.trim();
-      if (!clean || s.items.some((i) => i.label.toLowerCase() === clean.toLowerCase() && i.source === "told")) return;
-      const known = lookup(clean);
+      if (!clean || s.items.some((i) => i.label.toLowerCase() === clean.toLowerCase() && i.source === "told" && (i.domain ?? "food") === domain)) return;
+      const known = domain === "food" ? lookup(clean) : undefined;
       const item: RiderItem = {
-        id: uid(), label: known?.label ?? clean.charAt(0).toUpperCase() + clean.slice(1), tier, source: "told",
+        id: uid(), label: known?.label ?? clean.charAt(0).toUpperCase() + clean.slice(1), tier, source: "told", domain,
         covers: known?.covers, createdAt: now(),
       };
       commit({ ...s, items: [...s.items.filter((i) => !(i.source === "guess" && i.label.toLowerCase() === clean.toLowerCase())), item] }, { kind: "item-upsert", item });

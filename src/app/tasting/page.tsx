@@ -32,7 +32,7 @@ export default function Tasting() {
   }, [region]);
 
   const dish: Dish | undefined = feed.length ? feed[i % feed.length] : undefined;
-  const clash = dish ? clashFor(dish, state.items) : null;
+  const clash = dish ? clashFor(dish, state.items.filter((i) => (i.domain ?? "food") === "food")) : null;
   const rated = state.ratings.filter((r) => r.score !== null).length;
   const photo = usePhoto(dish?.name);
 

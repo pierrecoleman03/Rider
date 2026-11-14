@@ -26,6 +26,15 @@ export async function userFromRequest(req: Request) {
 
 /** What a partner receives: only the scopes the person allowed, read live at request time. */
 export function shapeRider(items: RiderItem[], scopes: Scope[]) {
+  const others = (["exp", "travel", "gifts", "style"] as const).reduce<Record<string, unknown>>((acc, d) => {
+    const inD = items.filter((i) => i.domain === d && i.source === "told" && scopes.includes(i.tier));
+    if (inD.length) acc[d] = { sentence: riderSentence(inD), never: inD.filter((i) => i.tier === "never").map((i) => i.label), rather: inD.filter((i) => i.tier === "rather").map((i) => i.label), love: inD.filter((i) => i.tier === "love").map((i) => i.label) };
+    return acc;
+  }, {});
+  return { ...shapeFood(items.filter((i) => (i.domain ?? "food") === "food"), scopes), categories: others };
+}
+
+function shapeFood(items: RiderItem[], scopes: Scope[]) {
   const told = items.filter((i) => i.source === "told");
   const pick = (tier: RiderItem["tier"]) =>
     told.filter((i) => i.tier === tier).map((i) => ({ label: i.label, allergy: i.allergy || undefined, covers: i.covers ?? undefined }));

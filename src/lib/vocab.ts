@@ -51,12 +51,13 @@ export const VOCAB: { label: string; covers?: string[]; allergen?: boolean }[] =
 /** The tap-to-pick chips on the first onboarding question: the most common allergies and hard nos. */
 export const COMMON_NEVERS = ["Peanuts", "Tree nuts", "Shellfish", "Fish", "Dairy", "Eggs", "Gluten", "Soy", "Sesame", "Pork", "Red meat", "Alcohol"];
 
-export function suggest(query: string, exclude: string[], limit = 4) {
+export function suggest(query: string, exclude: string[], limit = 4, words?: string[]) {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const have = new Set(exclude.map((e) => e.toLowerCase()));
-  const starts = VOCAB.filter((v) => v.label.toLowerCase().startsWith(q));
-  const contains = VOCAB.filter((v) => !v.label.toLowerCase().startsWith(q) && v.label.toLowerCase().includes(q));
+  const list: { label: string; covers?: string[]; allergen?: boolean }[] = words ? words.map((label) => ({ label })) : VOCAB;
+  const starts = list.filter((v) => v.label.toLowerCase().startsWith(q));
+  const contains = list.filter((v) => !v.label.toLowerCase().startsWith(q) && v.label.toLowerCase().includes(q));
   return [...starts, ...contains].filter((v) => !have.has(v.label.toLowerCase())).slice(0, limit);
 }
 

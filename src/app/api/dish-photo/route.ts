@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
   const key = process.env.UNSPLASH_ACCESS_KEY;
   const q = req.nextUrl.searchParams.get("q")?.slice(0, 80);
   if (!key || !q) return NextResponse.json({ photo: null });
-  const url = `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&content_filter=high&query=${encodeURIComponent(q + " food")}`;
+  const scene = req.nextUrl.searchParams.get("kind") === "scene";
+  const url = `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&content_filter=high&query=${encodeURIComponent(scene ? q : q + " food")}`;
   try {
     const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}`, "Accept-Version": "v1" }, next: { revalidate: 86400 } });
     if (!res.ok) return NextResponse.json({ photo: null });
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
     if (!p) return NextResponse.json({ photo: null });
     const utm = "?utm_source=rider&utm_medium=referral";
     return NextResponse.json(
-      { photo: { url: `${p.urls.raw}&w=900&h=600&fit=crop&auto=format&q=75`, alt: p.alt_description ?? q, credit: p.user?.name ?? "Unsplash", creditUrl: (p.user?.links?.html ?? "https://unsplash.com") + utm, sourceUrl: "https://unsplash.com" + utm } },
+      { photo: { url: `${p.urls.raw}&w=${scene ? 1200 : 900}&h=${scene ? 520 : 600}&fit=crop&auto=format&q=75`, alt: p.alt_description ?? q, credit: p.user?.name ?? "Unsplash", creditUrl: (p.user?.links?.html ?? "https://unsplash.com") + utm, sourceUrl: "https://unsplash.com" + utm } },
       { headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" } },
     );
   } catch {
