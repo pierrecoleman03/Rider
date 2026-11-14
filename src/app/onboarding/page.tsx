@@ -158,7 +158,7 @@ function Onboarding() {
           <section key="s3" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <h1 className="display h1 reveal">Your rider is ready.</h1>
             <div className="reveal" style={{ marginTop: 30, animationDelay: ".15s" }}>
-              <RiderCard name={name} allergy={picks.some((p) => p.allergy)} caption={picks.length ? `${picks.length} hard ${picks.length === 1 ? "no" : "nos"}` : "Add more anytime"} floating height={200} />
+              <RiderCard name={name} badge="Ready to connect" caption={picks.length ? `${picks.length} hard ${picks.length === 1 ? "no" : "nos"}` : "Add more anytime"} floating height={200} />
             </div>
             <label htmlFor="card-name" className="small" style={{ marginTop: 22 }}>Name on your card</label>
             <input id="card-name" className="input" style={{ paddingLeft: 16, marginTop: 6 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your first name" />

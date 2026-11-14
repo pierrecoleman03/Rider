@@ -7,7 +7,8 @@ import { RiderMark } from "@/components/RiderMark";
 
 interface Props {
   name: string;
-  allergy?: boolean;
+  /** Short live line on the card, like "Live in 4 apps". Shown with a pulsing dot. */
+  badge?: string;
   caption?: string;
   href?: string;
   /** Ignored: the card always keeps real credit card proportions. */
@@ -19,7 +20,7 @@ interface Props {
  * The Rider card: pearl surface, a slow sheen, and a luminous border that travels around the edge.
  * It tilts toward the pointer so it feels like a physical card in your hand.
  */
-export function RiderCard({ name, allergy, caption = "Tap to show at the table", href, floating }: Props) {
+export function RiderCard({ name, badge, caption = "Tap to show at the table", href, floating }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   function onMove(e: React.PointerEvent) {
@@ -43,8 +44,8 @@ export function RiderCard({ name, allergy, caption = "Tap to show at the table",
       <span style={{ position: "relative", display: "flex", flexDirection: "column", gap: 10 }}>
         <span className="display" style={{ fontSize: 32 }}>{name || "Your name"}</span>
         <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
-          {allergy ? (
-            <span style={{ height: 24, padding: "0 10px", borderRadius: 12, background: "rgba(28,28,58,0.88)", color: "#fff", display: "inline-flex", alignItems: "center", fontWeight: 500 }}>Allergy on file</span>
+          {badge ? (
+            <span style={{ height: 26, padding: "0 11px 0 9px", borderRadius: 13, background: "rgba(28,28,58,0.88)", color: "#fff", display: "inline-flex", alignItems: "center", gap: 7, fontWeight: 500 }}><span className="live-dot" />{badge}</span>
           ) : <span />}
           <span style={{ color: "#3e3f62" }}>{caption}</span>
         </span>

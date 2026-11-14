@@ -63,7 +63,6 @@ function Home() {
     ? (DISHES.find((x) => !state.ratings.some((r) => r.dishId === x.id)) ?? DISHES[0]).name.toLowerCase()
     : (room.cards.find((c) => !state.ratings.some((r) => r.dishId === c.id)) ?? room.cards[0]).name.toLowerCase();
   const headline = useMemo(() => synopsisHeadline(state), [state]);
-  const hasAllergy = state.items.some((i) => i.allergy && i.source === "told");
 
   if (!ready || !state.profile.onboarded) return <main className="page" aria-busy="true"><Glows /></main>;
 
@@ -78,7 +77,7 @@ function Home() {
           </Link>
         </header>
 
-        <RiderCard name={state.profile.name} allergy={hasAllergy} href="/pass" />
+        <RiderCard name={state.profile.name} badge={`Live in ${state.connections.filter((c) => !c.revokedAt).length || 1} ${state.connections.filter((c) => !c.revokedAt).length === 1 ? "app" : "apps"}`} href="/pass" />
 
         <Link href="/synopsis" className="glass synopsis-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", textDecoration: "none" }}>
           <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>

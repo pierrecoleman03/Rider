@@ -23,7 +23,7 @@ export default function Pass() {
           <h1 className="display" style={{ fontSize: 26 }}>Show at the table</h1>
         </header>
 
-        <RiderCard name={state.profile.name} allergy={never.some((i) => i.allergy)} caption="Hospitality rider" height={190} />
+        <RiderCard name={state.profile.name} caption="Hospitality rider" height={190} />
 
         <section className="glass" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
